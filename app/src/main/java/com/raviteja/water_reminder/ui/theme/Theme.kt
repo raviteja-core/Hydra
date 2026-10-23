@@ -13,27 +13,49 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = HydraPrimary,
-    secondary = HydraSecondary,
-    tertiary = HydraTertiary,
-    background = HydraBg,
-    surface = HydraCard,
-    onBackground = HydraOnSurface,
-    onSurface = HydraOnSurface,
-    surfaceVariant = HydraSurface,
-    onSurfaceVariant = HydraTextMuted
+    primary = WarmCoral,
+    onPrimary = TextCream,
+    primaryContainer = WarmCoralSubtle,
+    onPrimaryContainer = WarmCoralLight,
+    secondary = SageGreenLight,
+    onSecondary = TextCream,
+    secondaryContainer = SageGreen,
+    onSecondaryContainer = TextCream,
+    tertiary = EditorialNavyLight,
+    onTertiary = TextCream,
+    tertiaryContainer = EditorialNavy,
+    onTertiaryContainer = EditorialNavyLight,
+    background = CharcoalBg,
+    onBackground = TextCream,
+    surface = CharcoalSurface,
+    onSurface = TextCream,
+    surfaceVariant = CharcoalSurfaceElevated,
+    onSurfaceVariant = TextMuted,
+    outline = CharcoalBorder,
+    outlineVariant = CharcoalBorderMedium
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = HydraPrimary,
-    secondary = HydraSecondary,
-    tertiary = HydraTertiary,
-    background = Color.White,
-    surface = Color(0xFFF1F5F9),
-    onBackground = HydraBg,
-    onSurface = HydraBg,
-    surfaceVariant = Color(0xFFE2E8F0),
-    onSurfaceVariant = HydraSecondary
+    primary = WarmCoral,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFFFECE8),
+    onPrimaryContainer = WarmCoralMuted,
+    secondary = SageGreen,
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFE2ECE5),
+    onSecondaryContainer = SageGreen,
+    tertiary = EditorialNavy,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFE5EDF5),
+    onTertiaryContainer = EditorialNavy,
+    background = PaperLightBg,
+    onBackground = TextDark,
+    surface = PaperLightSurface,
+    onSurface = TextDark,
+    surfaceVariant = PaperLightSurfaceElevated,
+    onSurfaceVariant = TextDarkMuted,
+    outline = PaperLightBorder,
+    outlineVariant = Color(0xFFCCC7BD)
 )
 
 @Composable

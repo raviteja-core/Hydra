@@ -2,6 +2,7 @@ package com.raviteja.water_reminder.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,16 +17,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.raviteja.water_reminder.logic.HydrationAlgorithm
 import com.raviteja.water_reminder.logic.QuotesProvider
+import com.raviteja.water_reminder.ui.theme.EditorialSerif
+import com.raviteja.water_reminder.ui.theme.SageGreen
+import com.raviteja.water_reminder.ui.theme.WarmCoral
 import com.raviteja.water_reminder.viewmodel.WaterViewModel
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.core.Party
@@ -51,7 +59,7 @@ fun WaterDashboard(
     val hydrationStatus by viewModel.hydrationStatus.collectAsState()
     val hydrationDeficit by viewModel.hydrationDeficit.collectAsState()
     val haptic = LocalHapticFeedback.current
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
 
     var party by remember { mutableStateOf<List<Party>>(emptyList()) }
 
@@ -63,7 +71,7 @@ fun WaterDashboard(
                     maxSpeed = 30f,
                     damping = 0.9f,
                     spread = 360,
-                    colors = listOf(0xfce18a, 0xff726d, 0xf4306d, 0xb48def).map { it.toInt() },
+                    colors = listOf(0xFFFFA07A.toInt(), 0xFFFF6955.toInt(), 0xFF86A391.toInt(), 0xFFF5F2EB.toInt()),
                     position = Position.Relative(0.5, 0.3),
                     emitter = Emitter(duration = 100, TimeUnit.MILLISECONDS).max(100)
                 )
@@ -103,20 +111,20 @@ fun WaterDashboard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Battery Optimization Warning
+            // Battery Optimization Warning Banner (Subtle & Elegant)
             val powerManager = remember { context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager }
             val isOptimizing = remember { !powerManager.isIgnoringBatteryOptimizations(context.packageName) }
             
             if (isOptimizing && userProfile.remindersEnabled) {
                 Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
-                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(20.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
@@ -126,18 +134,29 @@ fun WaterDashboard(
                             }
                             context.startActivity(intent)
                         },
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f))
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Rounded.BatteryAlert, contentDescription = null, tint = Color(0xFFFFA000))
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.BatteryAlert,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Reminders may be delayed",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -153,28 +172,55 @@ fun WaterDashboard(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
+            // Top Header: User Profile Badge + Notification Bell
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "$greeting, ${userProfile.name}".uppercase(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        text = "Stay hydrated and healthy.",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Profile Avatar Initial
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.size(46.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = userProfile.name.take(1).uppercase(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "$greeting,".uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            letterSpacing = 1.2.sp
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = userProfile.name,
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontFamily = EditorialSerif
+                                ),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
                 }
+
+                // Bell Quick Toggle
                 Surface(
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(44.dp),
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     onClick = {
                         if (userProfile.remindersEnabled) {
                             com.raviteja.water_reminder.worker.ReminderScheduler.cancelReminders(context)
@@ -185,143 +231,297 @@ fun WaterDashboard(
                         }
                     }
                 ) {
-                    Icon(
-                        if (userProfile.remindersEnabled) Icons.Rounded.NotificationsActive else Icons.Rounded.NotificationsOff,
-                        contentDescription = "Toggle Reminders",
-                        modifier = Modifier.padding(12.dp),
-                        tint = if (userProfile.remindersEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Main Circular Progress
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(280.dp)
-            ) {
-                CircularProgressIndicator(
-                    progress = { 1f },
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    strokeWidth = 14.dp,
-                    strokeCap = StrokeCap.Round,
-                )
-                CircularProgressIndicator(
-                    progress = { animatedProgress },
-                    modifier = Modifier.fillMaxSize(),
-                    color = lerp(
-                        Color(0xFF00C2FF), // Deep Blue/Cyan
-                        Color(0xFFB2EBF2), // Light Cyan
-                        animatedProgress
-                    ),
-                    strokeWidth = 14.dp,
-                    strokeCap = StrokeCap.Round,
-                )
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${(progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.displayLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 64.sp
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = if (userProfile.remindersEnabled) Icons.Rounded.Notifications else Icons.Rounded.NotificationsOff,
+                            contentDescription = "Toggle Reminders",
+                            modifier = Modifier.size(20.dp),
+                            tint = if (userProfile.remindersEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    )
-                    Text(
-                        text = "OF DAILY GOAL",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 1.sp
-                    )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "${viewModel.formatAmount(totalIntake, unit)} / ${viewModel.formatAmount(dailyGoal, unit)}",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Status and Streak
-            Row(
+            // Editorial Mindful Hydration Banner (Inspired by Image 1 & 3)
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                shape = RoundedCornerShape(26.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
-                val statusColor = when (hydrationStatus) {
-                    com.raviteja.water_reminder.logic.HydrationAlgorithm.ReminderStatus.CRITICAL -> MaterialTheme.colorScheme.error
-                    com.raviteja.water_reminder.logic.HydrationAlgorithm.ReminderStatus.NORMAL -> Color(0xFFFBC02D)
-                    com.raviteja.water_reminder.logic.HydrationAlgorithm.ReminderStatus.PASSIVE -> Color(0xFF4CAF50)
-                }
-
-                StatusCard(
-                    modifier = Modifier.weight(1f),
-                    title = "STATUS",
-                    value = hydrationStatus.name,
-                    icon = Icons.Rounded.Info,
-                    color = statusColor
-                )
-
-                StatusCard(
-                    modifier = Modifier.weight(1f),
-                    title = "STREAK",
-                    value = if (streak == 1) "1 Day" else "$streak Days",
-                    icon = Icons.Rounded.Whatshot,
-                    color = Color(0xFFFF5722)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Hydration Deficit Info
-            if (hydrationDeficit > 0 && progress < 1f) {
-                Surface(
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(24.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.1f))
+                Column(
+                    modifier = Modifier.padding(22.dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Daily Rhythm",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.secondary,
+                                letterSpacing = 1.2.sp
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Stay in tune with your hydration.",
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontFamily = EditorialSerif,
+                                    fontSize = 22.sp,
+                                    lineHeight = 28.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Rounded.WaterDrop,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "\"$randomQuote\"",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontStyle = FontStyle.Italic
+                        ),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                    )
+
+                    Spacer(Modifier.height(18.dp))
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            val quickAmount = if (unit == "ml") 250 else 8
+                            if (unit == "ml") viewModel.addWaterIntake(quickAmount)
+                            else viewModel.addWaterIntake((quickAmount * 29.57).toInt())
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth().height(44.dp)
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = if (unit == "ml") "Quick Log +250ml" else "Quick Log +8oz",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Main Hero Circular Progress Card
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            ) {
+                Column(
+                    modifier = Modifier.padding(vertical = 28.dp, horizontal = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(240.dp)
+                    ) {
+                        // Background Track
+                        CircularProgressIndicator(
+                            progress = { 1f },
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            strokeWidth = 14.dp,
+                            strokeCap = StrokeCap.Round
+                        )
+                        // Active Progress Arc with Warm Coral
+                        CircularProgressIndicator(
+                            progress = { animatedProgress },
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 14.dp,
+                            strokeCap = StrokeCap.Round
+                        )
+
+                        // Centered Data
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "${(progress * 100).toInt()}%",
+                                style = MaterialTheme.typography.displayLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 54.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "OF DAILY GOAL",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                letterSpacing = 1.2.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Pill Badge Ratio
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = viewModel.formatAmount(totalIntake, unit),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = " / ${viewModel.formatAmount(dailyGoal, unit)}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Status and Streak Cards (Side by Side)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                val statusText = hydrationStatus.name
+                val statusColor = when (hydrationStatus) {
+                    HydrationAlgorithm.ReminderStatus.CRITICAL -> MaterialTheme.colorScheme.primary
+                    HydrationAlgorithm.ReminderStatus.NORMAL -> Color(0xFFE5A93C)
+                    HydrationAlgorithm.ReminderStatus.PASSIVE -> MaterialTheme.colorScheme.secondary
+                }
+
+                EditorialStatCard(
+                    modifier = Modifier.weight(1f),
+                    subtitle = "RHYTHM",
+                    value = statusText,
+                    icon = Icons.Rounded.BubbleChart,
+                    accentColor = statusColor
+                )
+
+                EditorialStatCard(
+                    modifier = Modifier.weight(1f),
+                    subtitle = "STREAK",
+                    value = if (streak == 1) "1 Day" else "$streak Days",
+                    icon = Icons.Rounded.LocalFireDepartment,
+                    accentColor = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            // Behind schedule warning if any
+            if (hydrationDeficit > 0 && progress < 1f) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Rounded.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                        Icon(
+                            Icons.Rounded.Schedule,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            text = "You are ${viewModel.formatAmount(hydrationDeficit, unit)} behind schedule.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            text = "You are ${viewModel.formatAmount(hydrationDeficit, unit)} behind your expected intake schedule.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             fontWeight = FontWeight.Medium
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Quick Add
-            Text(
-                text = "QUICK ADD",
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.align(Alignment.Start).padding(start = 4.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Quick Add Section (Categories Inspired by Reference)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "QUICK ADD",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    letterSpacing = 1.2.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Surface(
+                    onClick = { showCustomDialog = true },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "Custom",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 3 Quick Add Category Tiles
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 val amounts = if (unit == "ml") listOf(150, 250, 500) else listOf(5, 8, 17)
-                val labels = listOf("Glass", "Bottle", "Large")
+                val labels = listOf("Glass", "Bottle", "Flask")
                 val icons = listOf(Icons.Rounded.LocalDrink, Icons.Rounded.WaterDrop, Icons.Rounded.Coffee)
 
                 amounts.forEachIndexed { index, amount ->
-                    DrinkTypeItem(
+                    EditorialDrinkTile(
+                        modifier = Modifier.weight(1f),
                         icon = icons[index],
                         amount = if (unit == "ml") "${amount}ml" else "${amount}oz",
                         label = labels[index]
@@ -333,56 +533,10 @@ fun WaterDashboard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Quote Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
-                ),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Rounded.FormatQuote,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        text = "\"$randomQuote\"",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(100.dp))
         }
 
-        FloatingActionButton(
-            onClick = { 
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                showCustomDialog = true 
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(24.dp),
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            shape = RoundedCornerShape(16.dp),
-            elevation = FloatingActionButtonDefaults.elevation(8.dp)
-        ) {
-            Icon(Icons.Rounded.Add, contentDescription = "Add Custom", modifier = Modifier.size(28.dp))
-        }
+
 
         if (party.isNotEmpty()) {
             KonfettiView(
@@ -394,60 +548,97 @@ fun WaterDashboard(
 }
 
 @Composable
-fun StatusCard(modifier: Modifier, title: String, value: String, icon: ImageVector, color: Color) {
-    Card(
-        modifier = modifier.height(110.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.2f))
+fun EditorialStatCard(
+    modifier: Modifier,
+    subtitle: String,
+    value: String,
+    icon: ImageVector,
+    accentColor: Color
+) {
+    Surface(
+        modifier = modifier.height(98.dp),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxSize(),
+            modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = CircleShape,
-                    color = color.copy(alpha = 0.15f),
-                    modifier = Modifier.size(28.dp)
+                    color = accentColor.copy(alpha = 0.14f),
+                    modifier = Modifier.size(24.dp)
                 ) {
-                    Icon(icon, contentDescription = null, modifier = Modifier.padding(6.dp), tint = color)
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = accentColor)
+                    }
                 }
                 Spacer(Modifier.width(8.dp))
-                Text(title, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    letterSpacing = 1.sp
+                )
             }
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = color)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 17.sp),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
 
 @Composable
-fun DrinkTypeItem(icon: ImageVector, amount: String, label: String, onClick: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clip(RoundedCornerShape(24.dp))
-            .clickable(onClick = onClick)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-            .padding(vertical = 16.dp, horizontal = 8.dp)
-            .width(95.dp)
+fun EditorialDrinkTile(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    amount: String,
+    label: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier.height(115.dp),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        onClick = onClick
     ) {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-            modifier = Modifier.size(48.dp)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize().padding(8.dp)
         ) {
-            Icon(
-                icon, 
-                contentDescription = null, 
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(12.dp)
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.size(42.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        icon, 
+                        contentDescription = null, 
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = amount,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Spacer(Modifier.height(8.dp))
-        Text(amount, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

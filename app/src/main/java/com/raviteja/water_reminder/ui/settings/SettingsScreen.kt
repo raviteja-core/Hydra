@@ -1,5 +1,6 @@
 package com.raviteja.water_reminder.ui.settings
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -10,45 +11,39 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.raviteja.water_reminder.viewmodel.WaterViewModel
-
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.Contrast
-import com.raviteja.water_reminder.worker.ReminderScheduler
 import com.raviteja.water_reminder.R
-import kotlinx.coroutines.launch
+import com.raviteja.water_reminder.viewmodel.WaterViewModel
+import com.raviteja.water_reminder.worker.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
-import android.Manifest
-import android.content.Context
-import android.media.MediaPlayer
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
+import android.Manifest
+import android.app.AlarmManager
+import android.app.TimePickerDialog
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.MediaPlayer
 import android.net.Uri
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-
-import android.app.TimePickerDialog
-import android.app.AlarmManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import java.util.Calendar
 import java.util.Locale
 
@@ -125,31 +120,49 @@ fun SettingsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        // Editorial Header
+        Column {
+            Text(
+                text = "Preferences",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.headlineLarge,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "Personalize your rhythm, sound & goals",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
-        // Name
-        SettingsItem(title = "Account") {
+        // Account / Name
+        SettingsSection(title = "Account") {
             var nameText by remember(userProfile.name) { mutableStateOf(userProfile.name) }
             var isEditingName by remember { mutableStateOf(false) }
             
             Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(18.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (isEditingName) {
@@ -159,7 +172,11 @@ fun SettingsScreen(
                             label = { Text("Display Name") },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
-                            shape = RoundedCornerShape(16.dp)
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                            )
                         )
                         IconButton(onClick = { 
                             viewModel.updateProfile(userProfile.copy(name = nameText))
@@ -170,22 +187,30 @@ fun SettingsScreen(
                     } else {
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            modifier = Modifier.size(56.dp)
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            modifier = Modifier.size(52.dp)
                         ) {
-                            Icon(Icons.Rounded.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(12.dp))
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Rounded.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
+                            }
                         }
                         Spacer(Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = userProfile.name,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
+                                style = MaterialTheme.typography.titleMedium,
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Normal,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text("Hydration Enthusiast", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                text = "Hydration Enthusiast",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         IconButton(onClick = { isEditingName = true }) {
-                            Icon(Icons.Rounded.Edit, contentDescription = "Edit Name", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Rounded.Edit, contentDescription = "Edit Name", tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
                         }
                     }
                 }
@@ -193,45 +218,88 @@ fun SettingsScreen(
         }
 
         // Schedule
-        SettingsItem(title = "Schedule") {
+        SettingsSection(title = "Daily Window") {
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-                shape = RoundedCornerShape(24.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.padding(18.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f).clickable { showTimePicker(true) }) {
-                        Text("Wake Up", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        Text(formatTime(userProfile.wakeTime), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { showTimePicker(true) }
+                    ) {
+                        Text(
+                            "WAKE TIME",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            formatTime(userProfile.wakeTime),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
-                    VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                    Column(modifier = Modifier.weight(1f).clickable { showTimePicker(false) }) {
-                        Text("Sleep Time", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        Text(formatTime(userProfile.sleepTime), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    VerticalDivider(
+                        modifier = Modifier.height(36.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+                    )
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { showTimePicker(false) }
+                    ) {
+                        Text(
+                            "SLEEP TIME",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            formatTime(userProfile.sleepTime),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
         }
 
-        // Notifications
-        SettingsItem(title = "Reminders") {
+        // Reminders
+        SettingsSection(title = "Reminders & Alerts") {
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-                shape = RoundedCornerShape(24.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            modifier = Modifier.size(40.dp)
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            modifier = Modifier.size(42.dp)
                         ) {
-                            Icon(Icons.Rounded.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Rounded.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            }
                         }
-                        Spacer(Modifier.width(12.dp))
-                        Text("Smart Reminders", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                        Spacer(Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Smart Reminders", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
+                            Text("Adaptive nudges between wake & sleep", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                         Switch(
                             checked = userProfile.remindersEnabled,
                             onCheckedChange = { enabled ->
@@ -254,13 +322,17 @@ fun SettingsScreen(
                                     viewModel.updateProfile(userProfile.copy(remindersEnabled = false))
                                     ReminderScheduler.cancelReminders(context)
                                 }
-                            }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surface
+                            )
                         )
                     }
 
-                    // Battery Optimization
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    
+                    // Exact Alarm Check
                     val alarmManager = remember { context.getSystemService(Context.ALARM_SERVICE) as AlarmManager }
                     var hasExactAlarmPermission by remember { mutableStateOf(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -268,7 +340,6 @@ fun SettingsScreen(
                         } else true
                     ) }
 
-                    // Refresh permission state when screen is resumed
                     DisposableEffect(context) {
                         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
                             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
@@ -277,9 +348,6 @@ fun SettingsScreen(
                                 }
                             }
                         }
-                        // Note: This requires the context to be a LifecycleOwner, which is typical for Activities.
-                        // For simplicity in this Compose setup, we'll assume it's an Activity context or handled by the parent.
-                        // A more robust way would be using LocalLifecycleOwner.
                         (context as? androidx.lifecycle.LifecycleOwner)?.lifecycle?.addObserver(observer)
                         onDispose {
                             (context as? androidx.lifecycle.LifecycleOwner)?.lifecycle?.removeObserver(observer)
@@ -287,6 +355,7 @@ fun SettingsScreen(
                     }
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !hasExactAlarmPermission) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.clickable {
@@ -299,21 +368,24 @@ fun SettingsScreen(
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
                                 modifier = Modifier.size(40.dp)
                             ) {
-                                Icon(Icons.Rounded.Alarm, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp))
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Rounded.Alarm, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                                }
                             }
                             Spacer(Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Enable Exact Reminders", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
-                                Text("Required for reliable notifications", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                                Text("Enable Exact Reminders", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                                Text("Required for punctual hydration nudges", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f))
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                         }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     }
 
+                    // Battery Optimization
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.clickable {
@@ -326,20 +398,22 @@ fun SettingsScreen(
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                             modifier = Modifier.size(40.dp)
                         ) {
-                            Icon(Icons.Rounded.BatteryChargingFull, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Rounded.BatteryChargingFull, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            }
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Ignore Battery Optimizations", fontWeight = FontWeight.SemiBold)
+                            Text("Background Reliability", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
                             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
                             val isIgnoring = powerManager.isIgnoringBatteryOptimizations(context.packageName)
                             Text(
-                                text = if (isIgnoring) "Optimization Disabled (Recommended)" else "Optimization Enabled (May delay reminders)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (isIgnoring) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant
+                                text = if (isIgnoring) "Optimized for continuous delivery" else "May be delayed by OS battery saver",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isIgnoring) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -347,8 +421,14 @@ fun SettingsScreen(
 
                     // Sound Selection
                     if (userProfile.remindersEnabled) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                        Text("Notification Sound", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        Text(
+                            "CHIME SOUND",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
                         val sounds = listOf(
                             "hydra_chime" to R.raw.hydra_chime,
                             "hydra_save" to R.raw.hydra_save,
@@ -359,21 +439,25 @@ fun SettingsScreen(
                             val isSelected = userProfile.notificationSound == name
                             Surface(
                                 onClick = { viewModel.updateProfile(userProfile.copy(notificationSound = name)) },
-                                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp)
+                                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+                                shape = RoundedCornerShape(14.dp),
+                                border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)) else null
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 8.dp)
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp, horizontal = 12.dp)
                                 ) {
                                     RadioButton(
                                         selected = isSelected,
-                                        onClick = { viewModel.updateProfile(userProfile.copy(notificationSound = name)) }
+                                        onClick = { viewModel.updateProfile(userProfile.copy(notificationSound = name)) },
+                                        colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
                                     )
                                     Text(
                                         text = name.replace("hydra_", "").replaceFirstChar { it.uppercase() },
                                         modifier = Modifier.weight(1f),
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     IconButton(onClick = { playSound(resId) }) {
                                         Icon(Icons.AutoMirrored.Rounded.VolumeUp, contentDescription = "Play sound", tint = MaterialTheme.colorScheme.primary)
@@ -385,43 +469,47 @@ fun SettingsScreen(
                         Spacer(Modifier.height(4.dp))
                         OutlinedButton(
                             onClick = {
-                                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                                kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
                                     com.raviteja.water_reminder.worker.ReminderManager.handleReminder(context)
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                         ) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(8.dp))
-                            Text("Send Test Reminder", fontWeight = FontWeight.SemiBold)
+                            Text("Send Test Reminder", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
             }
         }
 
-        // Units and Goal
+        // Units and Goal (Row)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            SettingsItem(title = "Units", modifier = Modifier.weight(1f)) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            SettingsSection(title = "Units", modifier = Modifier.weight(1f)) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
+                    modifier = Modifier.fillMaxWidth().height(76.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         listOf("ml", "oz").forEach { unit ->
                             val isSelected = userProfile.unit == unit
                             Surface(
-                                modifier = Modifier.weight(1f).height(44.dp).clickable { viewModel.updateProfile(userProfile.copy(unit = unit)) },
-                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .clickable { viewModel.updateProfile(userProfile.copy(unit = unit)) },
+                                shape = RoundedCornerShape(16.dp),
                                 color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                                border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
@@ -437,10 +525,11 @@ fun SettingsScreen(
                 }
             }
 
-            SettingsItem(title = "Daily Goal", modifier = Modifier.weight(1f)) {
+            SettingsSection(title = "Daily Goal", modifier = Modifier.weight(1f)) {
                 Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
                     modifier = Modifier.fillMaxWidth().height(76.dp),
                     onClick = { showEditGoalDialog = true }
                 ) {
@@ -452,31 +541,33 @@ fun SettingsScreen(
                         Text(
                             text = viewModel.formatAmount(userProfile.dailyGoal, userProfile.unit),
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Normal,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.width(8.dp))
-                        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
                     }
                 }
             }
         }
 
         // Personalization
-        SettingsItem(title = "Personalization") {
+        SettingsSection(title = "Metabolic Personalization") {
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-                shape = RoundedCornerShape(24.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     PersonalizationSelector(
                         title = "Activity Level",
                         options = listOf("Low", "Medium", "High"),
                         selected = userProfile.activityLevel,
                         description = when(userProfile.activityLevel) {
-                            "Low" -> "Sedentary lifestyle."
-                            "Medium" -> "Moderate daily activity."
-                            "High" -> "Very active / Athlete."
+                            "Low" -> "Sedentary lifestyle"
+                            "Medium" -> "Moderate daily motion"
+                            "High" -> "Active athlete"
                             else -> ""
                         },
                         onSelected = { level ->
@@ -491,9 +582,9 @@ fun SettingsScreen(
                         options = listOf("Cold", "Normal", "Hot"),
                         selected = userProfile.climate,
                         description = when(userProfile.climate) {
-                            "Cold" -> "Low temp, minimal sweat."
-                            "Normal" -> "Temperate conditions."
-                            "Hot" -> "High temp or humidity."
+                            "Cold" -> "Low temp, minimal sweat"
+                            "Normal" -> "Temperate conditions"
+                            "Hot" -> "Elevated transpiration"
                             else -> ""
                         },
                         onSelected = { item ->
@@ -504,13 +595,13 @@ fun SettingsScreen(
                     )
 
                     PersonalizationSelector(
-                        title = "Goal Type",
+                        title = "Hydration Strategy",
                         options = listOf("Maintenance", "Fitness", "Medical"),
                         selected = userProfile.goalType,
                         description = when(userProfile.goalType) {
-                            "Maintenance" -> "Standard hydration."
-                            "Fitness" -> "Performance focus (+10%)."
-                            "Medical" -> "Consult your physician."
+                            "Maintenance" -> "Balanced daily wellness"
+                            "Fitness" -> "Performance boost (+10%)"
+                            "Medical" -> "Consult clinical guidance"
                             else -> ""
                         },
                         onSelected = { item ->
@@ -524,23 +615,25 @@ fun SettingsScreen(
         }
 
         // Appearance
-        SettingsItem(title = "Appearance") {
+        SettingsSection(title = "Appearance & Theme") {
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-                shape = RoundedCornerShape(24.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     val modes = listOf("System", "Light", "Dark")
                     modes.forEach { mode ->
                         val isSelected = userProfile.themeMode == mode
                         Surface(
                             onClick = { viewModel.updateProfile(userProfile.copy(themeMode = mode)) },
-                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent,
-                            shape = RoundedCornerShape(12.dp)
+                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+                            shape = RoundedCornerShape(14.dp),
+                            border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)) else null
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 12.dp)
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 14.dp)
                             ) {
                                 Icon(
                                     imageVector = when(mode) {
@@ -555,11 +648,12 @@ fun SettingsScreen(
                                 Text(
                                     text = mode,
                                     modifier = Modifier.weight(1f),
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 if (isSelected) {
-                                    Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -568,20 +662,25 @@ fun SettingsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Reset Data
-        TextButton(
-            onClick = { showResetDialog = true },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+        // Danger Zone: Reset Data
+        Surface(
+            color = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.25f)),
+            modifier = Modifier.fillMaxWidth().clickable { showResetDialog = true }
         ) {
-            Icon(Icons.Rounded.DeleteForever, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Reset All Data", fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Rounded.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Reset All Data & Logs", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
+            }
         }
         
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(48.dp))
     }
 
     if (showEditGoalDialog) {
@@ -593,37 +692,73 @@ fun SettingsScreen(
         var tempGoal by remember(userProfile.dailyGoal, userProfile.unit) { mutableStateOf(initialGoal) }
         AlertDialog(
             onDismissRequest = { showEditGoalDialog = false },
-            title = { Text("Update Daily Goal") },
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(28.dp),
+            title = {
+                Column {
+                    Text(
+                        text = "Target Volume",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "Update Daily Goal",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontFamily = FontFamily.Serif,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            },
             text = {
                 OutlinedTextField(
                     value = tempGoal,
                     onValueChange = { tempGoal = it },
-                    label = { Text("Goal in ${userProfile.unit}") },
+                    label = { Text("Goal in ${userProfile.unit.uppercase()}") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
-                    val inputVal = tempGoal.toFloatOrNull()
-                    if (inputVal != null && inputVal > 0) {
-                        val goalInMl = if (userProfile.unit == "oz") {
-                            (inputVal * 29.5735f).toInt()
-                        } else {
-                            inputVal.toInt()
+                Button(
+                    onClick = {
+                        val inputVal = tempGoal.toFloatOrNull()
+                        if (inputVal != null && inputVal > 0) {
+                            val goalInMl = if (userProfile.unit == "oz") {
+                                (inputVal * 29.5735f).toInt()
+                            } else {
+                                inputVal.toInt()
+                            }
+                            if (goalInMl > 0) {
+                                viewModel.updateProfile(userProfile.copy(dailyGoal = goalInMl))
+                            }
                         }
-                        if (goalInMl > 0) {
-                            viewModel.updateProfile(userProfile.copy(dailyGoal = goalInMl))
-                        }
-                    }
-                    showEditGoalDialog = false
-                }) {
-                    Text("Save")
+                        showEditGoalDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Save", fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEditGoalDialog = false }) {
-                    Text("Cancel")
+                TextButton(
+                    onClick = { showEditGoalDialog = false },
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -632,21 +767,44 @@ fun SettingsScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text("Reset Data?") },
-            text = { Text("This will permanently delete all your water logs and profile settings. This action cannot be undone.") },
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(28.dp),
+            title = {
+                Text(
+                    text = "Reset All Data?",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontFamily = FontFamily.Serif,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "This will permanently delete all water intake logs, streaks, and personalization settings. This cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         viewModel.resetData()
                         showResetDialog = false
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    ),
+                    shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text("Reset", color = MaterialTheme.colorScheme.error)
+                    Text("Reset Everything", fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
-                    Text("Cancel")
+                TextButton(
+                    onClick = { showResetDialog = false },
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -654,17 +812,17 @@ fun SettingsScreen(
 }
 
 @Composable
-fun SettingsItem(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun SettingsSection(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = title.uppercase(), 
-            style = MaterialTheme.typography.labelMedium, 
-            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.labelSmall, 
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
+            letterSpacing = 1.2.sp,
             modifier = Modifier.padding(start = 4.dp)
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         content()
     }
 }
@@ -679,12 +837,17 @@ fun PersonalizationSelector(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f), fontWeight = FontWeight.Bold)
+            Text(
+                title,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            )
             if (description.isNotBlank()) {
                 Text(
                     text = " • $description",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                     modifier = Modifier.padding(start = 4.dp)
                 )
             }
@@ -697,15 +860,18 @@ fun PersonalizationSelector(
             options.forEach { option ->
                 val isSelected = option == selected
                 Surface(
-                    modifier = Modifier.weight(1f).height(40.dp).clickable { onSelected(option) },
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp)
+                        .clickable { onSelected(option) },
+                    shape = RoundedCornerShape(14.dp),
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                    border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
                             option,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                         )

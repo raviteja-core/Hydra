@@ -5,15 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -61,53 +63,13 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    containerColor = MaterialTheme.colorScheme.background,
                     bottomBar = {
                         if (userProfile?.isFirstRun == false) {
-                            NavigationBar(
-                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                                tonalElevation = 0.dp
-                            ) {
-                                NavigationBarItem(
-                                    selected = selectedTab == 0,
-                                    onClick = { selectedTab = 0 },
-                                    icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
-                                    label = { Text("HOME", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                )
-                                NavigationBarItem(
-                                    selected = selectedTab == 1,
-                                    onClick = { selectedTab = 1 },
-                                    icon = { Icon(Icons.Rounded.History, contentDescription = "History") },
-                                    label = { Text("HISTORY", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                )
-                                NavigationBarItem(
-                                    selected = selectedTab == 2,
-                                    onClick = { selectedTab = 2 },
-                                    icon = { Icon(Icons.Rounded.Settings, contentDescription = "Settings") },
-                                    label = { Text("SETTINGS", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                )
-                            }
+                            EditorialBottomDock(
+                                selectedTab = selectedTab,
+                                onTabSelected = { selectedTab = it }
+                            )
                         }
                     }
                 ) { innerPadding ->
@@ -160,3 +122,77 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@Composable
+fun EditorialBottomDock(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 12.dp)
+            .navigationBarsPadding(),
+        shape = RoundedCornerShape(32.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 12.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val tabs = listOf(
+                Triple(0, Icons.Rounded.Home, "Home"),
+                Triple(1, Icons.Rounded.History, "History"),
+                Triple(2, Icons.Rounded.Settings, "Settings")
+            )
+
+            tabs.forEach { (index, icon, label) ->
+                val isSelected = selectedTab == index
+                val animatedBg by animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    label = "tabIndicator"
+                )
+                val iconTint by animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    label = "iconTint"
+                )
+
+                Surface(
+                    onClick = { onTabSelected(index) },
+                    shape = RoundedCornerShape(22.dp),
+                    color = animatedBg,
+                    modifier = Modifier.height(44.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = if (isSelected) 18.dp else 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = label,
+                            tint = iconTint,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        if (isSelected) {
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = iconTint
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
