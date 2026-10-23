@@ -13,4 +13,6 @@ app/build/
 .externalNativeBuild
 .cxx
 *.apk
+!apk/*.apk
 *.aab
+
